@@ -1,0 +1,746 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+      PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.saren.prod">
+
+	<!-- 상품 상세 정보 조회 -->
+	<select id="selectProdDetailInfoByProdId" parameterType="string"
+		resultType="map">
+		SELECT P.* , M.*, C.*
+		FROM PROD P
+		JOIN MEMBER M ON P.MEMBER_ID = M.MEMBER_ID 
+		JOIN CATEGORY C ON P.CATEGORY_ID = C.CATEGORY_ID
+
+		WHERE PROD_ID  =  #{prod_id}
+	
+	</select>
+	<select id="selectByProdId" parameterType="string"
+		resultType="prodVO">
+		SELECT *
+		FROM PROD
+		WHERE prod_id = #{prod_id}
+	</select>
+
+	<select id="selectByMemberId" parameterType="string"
+		resultType="prodVO">
+		SELECT *
+		FROM PROD
+		WHERE member_id = #{member_id}
+	</select>
+
+	<select id="selectAll" resultType="prodVO">
+		SELECT *
+		FROM PROD
+	</select>
+
+	<insert id="prodInsert" parameterType="prodVO">
+		INSERT
+		INTO PROD(prod_id,
+		prod_name, prod_desc, prod_price,
+		prod_added_date, category_id,
+		member_id)
+		VALUES(#{prod_id}, #{prod_name}, #{prod_desc},
+		#{prod_price},
+		#{prod_added_date}, #{category_id}, #{member_id})
+	</insert>
+
+	<update id="prodUpdate" parameterType="prodVO">
+		UPDATE PROD
+		SET
+		prod_name =
+		#{prod_name}, prod_desc = #{prod_desc},
+		"prod_price" = #{prod_price},
+		"prod_added_date" = #{prod_added_date},
+		"category_id" = #{category_id},
+		"member_id" = #{member_id}
+		WHERE
+		"prod_id" = #{prod_id}
+	</update>
+
+	<update id="prodModify" parameterType="prodVO">
+		UPDATE PROD
+		SET
+		prod_desc =
+		#{prod_desc},
+		prod_price = #{prod_price},
+		category_id = #{category_id}
+		WHERE prod_id = #{prod_id}
+	</update>
+
+	<delete id="prodDelete" parameterType="int">
+		DELETE
+		FROM PROD
+		WHERE
+		"prod_id" = #{prod_id}
+	</delete>
+	
+	<select id="selectAllByCtgWhenRcmd" parameterType="int" resultType="prodVO">
+	<![CDATA[
+	SELECT *
+	FROM PROD
+	JOIN
+		(SELECT CATEGORY_ID
+		FROM CATEGORY 
+		WHERE #{category_id}<CATEGORY_ID 
+		AND CATEGORY_ID< #{category_id} + POWER(10, 8-2*( SELECT CATEGORY_DEPTH
+													FROM CATEGORY
+													WHERE CATEGORY_ID = #{category_id}))
+		AND is_lowest=1) CTG
+	USING(CATEGORY_ID)
+	]]>
+	</select>
+	
+	<select id="selectAllProdByCurCtg" parameterType="map" resultType="map">
+		<![CDATA[
+		SELECT 
+			MEMBER.BRAND,
+			PRD_30.PROD_NAME,
+			PRD_30.PROD_PRICE,
+			PRD_30.PROD_ID
+		FROM
+			(SELECT *
+			FROM
+				(SELECT ROWNUM RN, PRD.*
+				FROM
+					(SELECT *
+					FROM PROD
+					JOIN
+						(SELECT CATEGORY_ID
+						FROM CATEGORY 
+						WHERE #{category_id}<CATEGORY_ID 
+						AND CATEGORY_ID< #{category_id} + POWER(10, 8-2*( SELECT CATEGORY_DEPTH
+																	FROM CATEGORY
+																	WHERE CATEGORY_ID = #{category_id}))
+						AND is_lowest=1) CTG
+					USING(CATEGORY_ID)) PRD)
+			WHERE #{start}<RN
+			AND RN<#{end}) PRD_30
+		JOIN MEMBER USING(MEMBER_ID)
+		]]>	
+	</select>
+	
+	<select id="selectAllProdNumsByCurCtg" parameterType="int" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*)
+		FROM
+			(SELECT ROWNUM RN, PRD.*
+			FROM
+				(SELECT *
+				FROM PROD
+				JOIN
+					(SELECT CATEGORY_ID
+					FROM CATEGORY 
+					WHERE #{category_id}<CATEGORY_ID 
+					AND CATEGORY_ID < #{category_id} + POWER(10, 8-2*( SELECT CATEGORY_DEPTH
+																	   FROM CATEGORY
+																	   WHERE CATEGORY_ID = #{category_id}))
+					AND is_lowest=1) CTG
+				USING(CATEGORY_ID)) PRD)
+		]]>	
+		</select>
+	
+	<select id="selectProdByLwstCtgId" parameterType="int" resultType="map">
+		<![CDATA[
+		SELECT 
+			MEMBER.BRAND,
+			PRD_30.PROD_NAME,
+			PRD_30.PROD_PRICE,
+			PRD_30.PROD_ID
+		FROM
+			(
+				SELECT *
+				FROM
+					(
+						SELECT ROWNUM RN, PRD.*
+						FROM
+							(
+								SELECT *
+								FROM PROD
+								WHERE CATEGORY_ID=#{category_id}
+							) PRD
+					) 
+				WHERE #{start}<RN
+				AND RN<#{end}
+			) PRD_30
+		JOIN MEMBER USING(MEMBER_ID)
+		]]>	
+	</select>
+	
+	<select id="selectProdNumsByLwstCtgId" parameterType="int" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*)
+		FROM
+			(
+				SELECT *
+				FROM
+					(
+						SELECT ROWNUM RN, PRD.*
+						FROM
+							(
+								SELECT *
+								FROM PROD
+								WHERE CATEGORY_ID=#{category_id}
+							) PRD
+					) 
+			) PRD_30
+		]]>
+	</select>
+	
+	<select id="selectBrndsByCtgId" parameterType="map" resultType="string">
+		
+		<choose>
+			<when test="is_lowest == 0">
+			<![CDATA[ 
+			SELECT BRAND
+			FROM
+				(SELECT ROWNUM RN, BRAND
+				FROM
+					(SELECT DISTINCT MEMBER.BRAND
+					FROM PROD
+					JOIN
+						(SELECT CATEGORY_ID
+						FROM CATEGORY 
+						WHERE #{category_id}<CATEGORY_ID 
+						AND CATEGORY_ID< #{category_id} + POWER(10, 8-2*( SELECT CATEGORY_DEPTH
+																	FROM CATEGORY
+																	WHERE CATEGORY_ID = #{category_id}))
+						AND is_lowest=1) CTG
+					USING(CATEGORY_ID) 
+					JOIN MEMBER 
+					USING(MEMBER_ID)) PRD)
+			WHERE #{start}<RN AND RN<#{end}
+			]]>
+			</when>
+			
+			<otherwise>
+			<![CDATA[ 
+			SELECT BRAND
+			FROM
+				(
+					SELECT ROWNUM RN, BRAND
+					FROM
+						(	
+							SELECT DISTINCT MEMBER.BRAND
+							FROM
+								(
+									SELECT *
+									FROM PROD
+									WHERE CATEGORY_ID=#{category_id}
+								) PRD
+							JOIN MEMBER
+							USING(MEMBER_ID)
+						)
+				) PRD_30
+			WHERE #{start}<RN AND RN<#{end}
+			]]>
+			</otherwise>
+		</choose>
+
+	</select>
+	
+	<select id="selectBrndsNumsByCtgId" parameterType="map" resultType="int">
+		
+		<choose>
+			<when test="is_lowest == 0">
+			<![CDATA[ 
+			SELECT COUNT(*)
+			FROM
+				(SELECT DISTINCT MEMBER.BRAND
+				FROM PROD
+				JOIN
+					(SELECT CATEGORY_ID
+					FROM CATEGORY 
+					WHERE #{category_id}<CATEGORY_ID 
+					AND CATEGORY_ID< #{category_id} + POWER(10, 8-2*( SELECT CATEGORY_DEPTH
+																FROM CATEGORY
+																WHERE CATEGORY_ID = #{category_id}))
+					AND is_lowest=1) CTG
+				USING(CATEGORY_ID) 
+				JOIN MEMBER 
+				USING(MEMBER_ID))
+			]]>
+			</when>
+			
+			<otherwise>
+			<![CDATA[ 
+			SELECT COUNT(*)
+			FROM
+				(
+					SELECT DISTINCT MEMBER.BRAND
+					FROM
+						(
+							SELECT *
+							FROM PROD
+							WHERE CATEGORY_ID=#{category_id}
+						) PRD
+					JOIN MEMBER
+					USING(MEMBER_ID)
+				)
+			]]>
+			</otherwise>
+		</choose>
+		
+	</select>
+	
+	<select id="searchByBrndAndPrc" parameterType="map" resultType="map">
+		<choose>
+			<when test="is_lowest == 0">
+			SELECT 
+				BRAND,
+				PROD_NAME,
+				PROD_PRICE,
+				PROD_ID
+			FROM
+				(SELECT
+					ROWNUM RN,
+					BRAND,
+					PROD_NAME,
+					PROD_PRICE,
+					PROD_ID
+				FROM
+					(SELECT
+						BRAND,
+						PROD_NAME,
+						PROD_PRICE,
+						PROD_ID
+					FROM PROD
+					JOIN
+						(SELECT MEMBER_ID, BRAND
+						FROM MEMBER
+						WHERE BRAND IN 
+						<foreach collection="slctdBrnd" item="brnd" open="(" close=")" separator=",">
+							#{brnd}
+						</foreach>)
+					USING(MEMBER_ID)
+					INTERSECT
+					SELECT 
+						MEMBER.BRAND,
+						PROD_NAME,
+						PROD_PRICE,
+						PROD_ID
+					FROM
+						(SELECT *
+						FROM PROD
+						JOIN
+			<![CDATA[ 
+							(SELECT CATEGORY_ID
+							FROM CATEGORY 
+							WHERE #{category_id}<CATEGORY_ID 
+							AND CATEGORY_ID< #{category_id} + POWER(10, 8-2*( SELECT CATEGORY_DEPTH
+																		FROM CATEGORY
+																		WHERE CATEGORY_ID = #{category_id}))
+							AND is_lowest=1) CTG
+						USING(CATEGORY_ID))
+					JOIN MEMBER USING(MEMBER_ID)))
+			WHERE #{start}<RN AND RN<#{end}
+			]]>
+			
+			</when>
+			
+			<otherwise>
+			SELECT 
+				BRAND,
+				PROD_NAME,
+				PROD_PRICE,
+				PROD_ID
+			FROM
+				(SELECT
+					ROWNUM RN,
+					BRAND,
+					PROD_NAME,
+					PROD_PRICE,
+					PROD_ID
+				FROM
+					(SELECT
+						BRAND,
+						PROD_NAME,
+						PROD_PRICE,
+						PROD_ID
+					FROM PROD
+					JOIN
+						(SELECT MEMBER_ID, BRAND
+						FROM MEMBER
+						WHERE BRAND IN 
+						<foreach collection="slctdBrnd" item="brnd" open="(" close=")" separator=",">
+							#{brnd}
+						</foreach>)
+					USING(MEMBER_ID)
+					INTERSECT
+					SELECT 
+						MEMBER.BRAND,
+						PROD_NAME,
+						PROD_PRICE,
+						PROD_ID
+					FROM
+						(SELECT *
+						FROM PROD
+						WHERE CATEGORY_ID = #{category_id})
+					JOIN MEMBER USING(MEMBER_ID)))
+			<![CDATA[ 
+			WHERE #{start}<RN AND RN<#{end}
+			]]>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="searchNumsByBrndAndPrc" parameterType="map" resultType="int">
+		<choose>
+			<when test="is_lowest == 0">
+			SELECT COUNT(*)
+			FROM
+				(SELECT
+					BRAND,
+					PROD_NAME,
+					PROD_PRICE,
+					PROD_ID
+				FROM PROD
+				JOIN
+					(SELECT MEMBER_ID, BRAND
+					FROM MEMBER
+					WHERE BRAND IN 
+					<foreach collection="slctdBrnd" item="brnd" open="(" close=")" separator=",">
+						#{brnd}
+					</foreach>)
+				USING(MEMBER_ID)
+				INTERSECT
+				SELECT 
+					MEMBER.BRAND,
+					PROD_NAME,
+					PROD_PRICE,
+					PROD_ID
+				FROM
+					(SELECT *
+					FROM PROD
+					JOIN
+			<![CDATA[ 
+						(SELECT CATEGORY_ID
+						FROM CATEGORY 
+						WHERE #{category_id}<CATEGORY_ID 
+						AND CATEGORY_ID< #{category_id} + POWER(10, 8-2*( SELECT CATEGORY_DEPTH
+																	FROM CATEGORY
+																	WHERE CATEGORY_ID = #{category_id}))
+						AND is_lowest=1) CTG
+					USING(CATEGORY_ID))
+				JOIN MEMBER USING(MEMBER_ID))
+			]]>
+			
+			</when>
+			
+			<otherwise>
+			SELECT COUNT(*)
+			FROM
+				(SELECT
+					BRAND,
+					PROD_NAME,
+					PROD_PRICE,
+					PROD_ID
+				FROM PROD
+				JOIN
+					(SELECT MEMBER_ID, BRAND
+					FROM MEMBER
+					WHERE BRAND IN 
+					<foreach collection="slctdBrnd" item="brnd" open="(" close=")" separator=",">
+						#{brnd}
+					</foreach>)
+				USING(MEMBER_ID)
+				INTERSECT
+				SELECT 
+					MEMBER.BRAND,
+					PROD_NAME,
+					PROD_PRICE,
+					PROD_ID
+				FROM
+					(SELECT *
+					FROM PROD
+					WHERE CATEGORY_ID = #{category_id})
+				JOIN MEMBER USING(MEMBER_ID))
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="sellerByProd" parameterType="string"
+		resultType="SellerProdVO">
+		SELECT DISTINCT
+		p.prod_id,
+		p.prod_name,
+		p.prod_desc,
+		p.prod_price,
+		p.prod_added_date,
+		p.category_id,
+		pi.img_id,
+		po.opt_id,
+		po.opt_name,
+		po.opt_value,
+		m.member_name
+		FROM
+		prod p
+		JOIN
+		member m ON p.member_id =
+		m.member_id
+		LEFT JOIN
+		prod_image pi ON p.prod_id = pi.prod_id
+		LEFT JOIN
+		prod_option po ON p.prod_id = po.prod_id
+		WHERE
+		m.member_type = '2'
+		AND
+		m.member_id = #{member_id}
+		ORDER BY
+		p.prod_id
+	</select>
+
+	<select id="sellerProdRank" resultType="map">
+        <![CDATA[
+        SELECT * FROM (
+            SELECT
+                p.prod_id,
+                p.prod_name,
+                p.prod_desc,
+                p.prod_price,
+                p.prod_added_date,
+                p.category_id,
+                pi.img_id,
+                po.opt_id,
+                po.opt_name,
+                po.opt_value,
+                m.member_id,
+                sps.stock,
+                SUM(NVL(SPS.total, 0)) AS total_sales
+            FROM
+                PROD P
+            JOIN
+                member m ON p.member_id = m.member_id
+            LEFT JOIN
+                prod_image pi ON p.prod_id = pi.prod_id
+            LEFT JOIN
+                prod_option po ON p.prod_id = po.prod_id
+            LEFT JOIN
+                SELL_PROD_STOCK SPS ON P.prod_id = SPS.prod_id
+            GROUP BY
+                p.prod_id,
+                p.prod_name,
+                p.prod_desc,
+                p.prod_price,
+                p.prod_added_date,
+                p.category_id,
+                pi.img_id,
+                po.opt_id,
+                po.opt_name,
+                po.opt_value,
+                m.member_id,
+                sps.stock
+            HAVING
+                SUM(NVL(SPS.total, 0)) > 0
+            ORDER BY
+                total_sales DESC
+        ) WHERE ROWNUM <= 10
+        ]]>
+	</select>
+	
+	<select id="allProd" resultType="SellerProdVO">
+    SELECT DISTINCT
+        m.member_id,
+        m.member_name,
+        m.email,
+        m.phone,
+        m.brand,
+        m.birth_date,
+        m.last_access,
+        m.member_type,
+        m.gender,
+        m.seller_authority,
+        m.create_date,
+        p.prod_id,
+        p.prod_name,
+        p.prod_desc,
+        p.prod_price,
+        p.prod_added_date,
+        p.category_id,
+        pi.img_id,
+        pi.img_type,
+        s.s_stock_id AS s_stock_id,
+        s.stock,
+        s.total,
+        po1.opt_id AS opt_id1,
+        po2.opt_id AS opt_id2,
+        po3.opt_id AS opt_id3,
+        po4.opt_id AS opt_id4,
+        po5.opt_id AS opt_id5,
+        po.opt_id,
+        po.opt_name,
+        po.opt_value
+    FROM
+        prod p
+    JOIN
+        member m ON p.member_id = m.member_id
+    LEFT JOIN
+        prod_image pi ON p.prod_id = pi.prod_id
+    LEFT JOIN
+        sell_prod_stock s ON p.prod_id = s.prod_id
+    LEFT JOIN
+        prod_option po ON p.prod_id = po.prod_id
+    LEFT JOIN
+        prod_option po1 ON p.prod_id = po1.prod_id AND po1.opt_id = 1
+    LEFT JOIN
+        prod_option po2 ON p.prod_id = po2.prod_id AND po2.opt_id = 2
+    LEFT JOIN
+        prod_option po3 ON p.prod_id = po3.prod_id AND po3.opt_id = 3
+    LEFT JOIN
+        prod_option po4 ON p.prod_id = po4.prod_id AND po4.opt_id = 4
+    LEFT JOIN
+        prod_option po5 ON p.prod_id = po5.prod_id AND po5.opt_id = 5
+    ORDER BY
+        p.prod_id
+	</select>
+	
+	
+	<select id="searchSellerByProd" resultType="SellerProdVO"
+		parameterType="string">
+		SELECT DISTINCT
+		m.member_id,
+		m.member_name,
+		m.email,
+		m.phone,
+		m.brand,
+		m.birth_date,
+		m.last_access,
+		m.member_type,
+		m.gender,
+		m.seller_authority,
+		m.create_date,
+		p.prod_id,
+		p.prod_name,
+		p.prod_desc,
+		p.prod_price,
+		p.prod_added_date,
+		p.category_id,
+		pi.img_id,
+		pi.img_type,
+		s.s_stock_id AS
+		s_stock_id,
+		s.stock,
+		s.total,
+		po1.opt_id AS opt_id1,
+		po2.opt_id AS
+		opt_id2,
+		po3.opt_id AS opt_id3,
+		po4.opt_id AS opt_id4,
+		po5.opt_id AS
+		opt_id5,
+		po.opt_id,
+		po.opt_name,
+		po.opt_value
+		FROM
+		prod p
+		JOIN
+		member m ON
+		p.member_id = m.member_id
+		LEFT JOIN
+		prod_image pi ON p.prod_id =
+		pi.prod_id
+		LEFT JOIN
+		sell_prod_stock s ON p.prod_id = s.prod_id
+		LEFT
+		JOIN
+		prod_option po ON p.prod_id = po.prod_id
+		LEFT JOIN
+		prod_option po1
+		ON p.prod_id = po1.prod_id AND po1.opt_id = 1
+		LEFT JOIN
+		prod_option po2
+		ON p.prod_id = po2.prod_id AND po2.opt_id = 2
+		LEFT JOIN
+		prod_option po3
+		ON p.prod_id = po3.prod_id AND po3.opt_id = 3
+		LEFT JOIN
+		prod_option po4
+		ON p.prod_id = po4.prod_id AND po4.opt_id = 4
+		LEFT JOIN
+		prod_option po5
+		ON p.prod_id = po5.prod_id AND po5.opt_id = 5
+		<where>
+			<if test="searchType != null and !searchType.isEmpty()">
+				m.member_name LIKE '%' || #{searchType} || '%' OR
+				m.brand LIKE '%' || #{searchType} || '%' OR
+				p.prod_name LIKE '%' || #{searchType} || '%'
+			</if>
+		</where>
+		ORDER BY p.prod_id
+	</select>
+	
+	<select id="selectAll2" resultType="map">
+		SELECT
+		M.brand,
+		P.prod_name,
+		P.prod_price
+		FROM
+		MEMBER M
+		JOIN
+		PROD P ON M.member_id = P.member_id
+	</select>
+
+	<select id="allProd2" resultType="SellerProdVO">
+		SELECT
+		m.member_id,
+		m.member_name,
+		m.email,
+		m.phone,
+		m.brand,
+		m.birth_date,
+		m.last_access,
+		m.member_type,
+		m.gender,
+		m.seller_authority,
+		m.create_date,
+		p.prod_id,
+		p.prod_name,
+		p.prod_desc,
+		p.prod_price,
+		p.prod_added_date,
+		p.category_id,
+		pi.img_id,
+		pi.img_type,
+		s.s_stock_id AS s_stock_id,
+		s.stock,
+		s.total,
+		po1.opt_id AS opt_id1,
+		po2.opt_id AS opt_id2,
+		po3.opt_id AS opt_id3,
+		po4.opt_id AS opt_id4,
+		po5.opt_id AS opt_id5,
+		po.opt_id,
+		po.opt_name,
+		po.opt_value
+		FROM
+		prod p
+		JOIN
+		member m ON p.member_id = m.member_id
+		LEFT
+		JOIN
+		prod_image pi ON p.prod_id = pi.prod_id
+		LEFT JOIN
+		sell_prod_stock
+		s ON p.prod_id = s.prod_id
+		LEFT JOIN
+		prod_option po ON p.prod_id =
+		po.prod_id
+		LEFT JOIN
+		prod_option po1 ON p.prod_id = po1.prod_id AND
+		po1.opt_id = 1
+		LEFT JOIN
+		prod_option po2 ON p.prod_id = po2.prod_id AND
+		po2.opt_id = 2
+		LEFT JOIN
+		prod_option po3 ON p.prod_id = po3.prod_id AND
+		po3.opt_id = 3
+		LEFT JOIN
+		prod_option po4 ON p.prod_id = po4.prod_id AND
+		po4.opt_id = 4
+		LEFT JOIN
+		prod_option po5 ON p.prod_id = po5.prod_id AND
+		po5.opt_id = 5
+		ORDER BY
+		p.prod_id
+	</select>
+</mapper>

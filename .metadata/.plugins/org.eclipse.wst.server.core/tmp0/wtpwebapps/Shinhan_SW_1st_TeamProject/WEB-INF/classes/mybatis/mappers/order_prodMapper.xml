@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+      PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.saren.orderprod">
+
+	<!-- 주문상품 브랜드,이름 -->
+	<select id="getOrderProdBrand" parameterType="int" 
+			resultType="map">
+		SELECT M.brand, p.prod_name
+		FROM MEMBER M
+		JOIN PROD P ON M.member_id = P.member_id
+		JOIN SELL_PROD_STOCK S ON P.prod_id = S.prod_id
+		JOIN ORDER_DETAIL O ON S.s_stock_id = O.s_stock_id
+		WHERE O.orderdetail_id = #{orderdetail_id};
+	</select>
+	
+	<!-- 결제 완료된 주문 상품 목록 (join수정-0708) -->
+	<select id="orderProductById" parameterType="string"
+		resultType="map">
+		SELECT
+            op.order_id,
+            p.prod_name, 
+            op.total_price, 
+            od.order_num,
+            od.order_product_price,
+            od.order_id,
+            op.order_date,
+            pi.img_id,
+            od.order_state
+        FROM 
+            order_prod op
+        JOIN 
+            order_detail od ON op.order_id = od.order_id
+        JOIN 
+            SELL_PROD_STOCK sps ON od.s_stock_id = sps.s_stock_id
+        JOIN 
+            PROD p ON p.prod_id = sps.prod_id
+        LEFT OUTER JOIN (
+            SELECT img_id, prod_id
+            FROM (
+                SELECT img_id, prod_id,
+                       ROW_NUMBER() OVER (PARTITION BY prod_id ORDER BY img_id) AS rn
+                FROM PROD_IMAGE
+            ) pi
+            WHERE pi.rn = 1
+        ) pi ON p.prod_id = pi.prod_id
+        WHERE 
+            op.member_id = #{member_id}
+        AND od.order_state = '결제완료'
+	</select>
+	<!--  
+	<select id="selectById2" parameterType="int" 
+		resultType="com.team4.shoppingmall.order_prod.OrderProdDetailDTO"> 
+		SELECT
+			P.prod_name,
+		   	M.brand, 
+			S.opt_id1,
+			S.opt_id2,
+			S.opt_id3,
+			S.opt_id4,
+			S.opt_id5,
+			OD.order_product_price,
+			OD.order_state,
+			PI.img_id
+		FROM
+			ORDER_DETAIL OD
+		JOIN
+			ORDER_PROD OP ON OD.order_id = OP.order_id
+		JOIN
+			SELL_PROD_STOCK S ON OD.s_stock_id = S.s_stock_id
+		JOIN
+			PROD P ON S.prod_id = P.prod_id
+		JOIN
+			MEMBER M ON P.member_id = M.member_id
+		JOIN
+			PROD_IMAGE PI ON P.prod_id = PI.prod_id
+		where 
+			OD.ORDER_ID = #{aa}
+	</select>
+	-->
+	<!-- 주문상세 -->
+	<select id="selectById" parameterType="int" resultType="order_prodVO"> 
+		SELECT *
+		FROM ORDER_PROD
+		WHERE order_id = #{order_id}
+	</select>
+
+	<!-- 주문목록 -->
+	<select id="selectAll" resultType="order_prodVO">
+		SELECT *
+		FROM ORDER_PROD
+		
+	</select>
+
+	
+	<!-- product_detail.jsp 주문생성 -->
+	<!-- DB세팅하고 CURRVAL안될 경우 수정.
+		SELECT last_number-1 FROM user_sequences WHERE sequence_name = 'ORDER_PROD_SEQUENCE' 
+		<selectKey keyProperty="order_id" resultType="Integer" order="AFTER">
+       		SELECT ORDER_PROD_SEQUENCE.CURRVAL FROM DUAL
+ 		</selectKey>
+	-->
+	<insert id="orderprodInsert" parameterType="com.team4.shoppingmall.order_prod.OrderProdDTO">
+		INSERT INTO ORDER_PROD (order_id, order_date, member_id, addr_num, total_price)
+		SELECT ORDER_PROD_SEQUENCE.NEXTVAL, SYSDATE, #{member_id}, addr_num, #{total_price}
+		FROM addr_list 
+		WHERE member_id = #{member_id} AND IS_MASTER_ADDR = 'Y'
+	</insert>
+	
+	<!-- 장바구니에서 주문 생성할 때 쓰기 위함 -->
+	<insert id="orderprodInsertForCart" parameterType="com.team4.shoppingmall.order_prod.OrderProdDTO">
+		INSERT INTO ORDER_PROD (order_id, order_date, member_id, addr_num, total_price)
+		SELECT #{order_id}, SYSDATE, #{member_id}, addr_num, #{total_price}
+		FROM addr_list 
+		WHERE member_id = #{member_id} AND IS_MASTER_ADDR = 'Y'
+	</insert>
+	<!-- 
+	INSERT INTO ORDER_PROD (order_id, order_date, member_id, addr_num, total_price)
+		#{order_id}, SYSDATE, #{member_id}, addr_num, #{total_price}
+		FROM addr_list 
+		WHERE member_id = #{member_id} AND IS_MASTER_ADDR = 'Y'
+	 -->
+	<select id="sequenceOrderId" resultType="int">
+		SELECT last_number-1 FROM user_sequences WHERE sequence_name = 'ORDER_PROD_SEQUENCE' 
+	</select>
+	
+	
+	<!-- 주문수정 -->
+	<update id="orderprodUpdate" parameterType="order_prodVO">
+		UPDATE ORDER_PROD
+		SET
+		order_date=#{order_date},
+		addr_num = #{addr_num},
+		total_price = #{total_price}
+		WHERE order_id = #{order_id}
+	</update>
+	
+	<update id="updateOrderPrice" parameterType="order_prodVO">
+		UPDATE ORDER_PROD
+		SET
+		total_price = #{total_price}
+		WHERE order_id = #{order_id}
+	</update>
+
+	<!-- orderlist.jsp에서, 상세상품 옵션 출력시, 모든 옵션 가져오기 -->
+    <select id="selectOptions" resultType="prod_optionVO">
+	    SELECT *
+	    FROM PROD_OPTION 
+    </select>
+
+
+	<!-- orderlist.jsp에 출력할 상품명, 브랜드, 옵션, 상품가격, 이미지URL -->
+	<select id="selectById2" parameterType="int" resultType="order_prod_detailVO"> 
+		SELECT
+		    op.order_id,
+		    p.prod_name, 
+		    m.brand,
+		    sps.opt_id1,
+		    sps.opt_id2,
+		    sps.opt_id3,
+		    sps.opt_id4,
+		    sps.opt_id5,
+		    od.order_product_price,
+		    pi.img_id,
+		    od.order_state,
+		    p.prod_id,
+		    od.order_num
+		FROM 
+		    order_prod op
+		JOIN 
+		    order_detail od ON op.order_id = od.order_id
+		JOIN 
+		    SELL_PROD_STOCK sps ON od.s_stock_id = sps.s_stock_id
+		JOIN 
+		    PROD p ON p.prod_id = sps.prod_id
+		JOIN
+		    MEMBER m ON p.member_id = m.member_id
+		LEFT OUTER JOIN (
+		    SELECT img_id, prod_id
+		    FROM (
+		        SELECT img_id, prod_id,
+		               ROW_NUMBER() OVER (PARTITION BY prod_id ORDER BY img_id) AS rn
+		        FROM PROD_IMAGE
+		    ) pi
+		    WHERE pi.rn = 1
+		) pi ON p.prod_id = pi.prod_id
+		WHERE 
+		    op.member_id = 'testid'
+	</select>
+
+	<!-- orderlist.jsp에서, 주문취소 -->
+	<update id="orderCancel" parameterType="int">
+		UPDATE 
+			ORDER_PROD 
+		SET 
+			order_state = 'cancelled' 
+		WHERE 
+			order_id = #{aa} 
+	</update>
+	
+	<!-- ordrlist.jsp에서, 환불 -->
+	<update id="orderRefund" parameterType="int">
+		UPDATE 
+			ORDER_DETAIL
+		SET 
+			order_state = '환불완료' 
+		WHERE 
+			order_id = #{aa} 
+	</update>
+	
+	<!-- 주문상세 -->
+	<select id="selectByMemId" parameterType="string" resultType="order_prodVO"> 
+		SELECT *
+		FROM ORDER_PROD
+		WHERE member_id = #{member_id}
+	</select>
+	
+	<delete id="orderprodDelete" parameterType="int">
+		DELETE
+		FROM ORDER_PROD
+		WHERE order_id = #{order_id}
+	</delete>
+	
+	<select id="findMaxOrderID" resultType="int">
+		SELECT MAX(order_id) AS max_order_id
+		FROM ORDER_PROD
+	</select>
+	
+</mapper>

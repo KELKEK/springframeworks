@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+      PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.saren.cart">
+	<!-- 해당 장바구니ID의 상품정보 조회 -->
+	<select id="sellCartProdByCart_id" parameterType="map" resultType="map">
+		SELECT
+		    c.cart_id,
+		    p.prod_name,
+		    pi.img_id,
+		    pi.prod_id
+		FROM
+		    CART c
+		LEFT JOIN
+		    SELL_PROD_STOCK sps ON c.s_stock_id = sps.s_stock_id
+		LEFT JOIN
+		    RENT_PROD_STOCK rps ON c.r_stock_id = rps.r_stock_id
+		LEFT JOIN
+		    PROD p ON p.prod_id = COALESCE(sps.prod_id, rps.prod_id)
+		LEFT JOIN
+		    (
+		        SELECT pi.prod_id, pi.img_id
+		        FROM (
+		            SELECT pi.prod_id, pi.img_id,
+		                   ROW_NUMBER() OVER (PARTITION BY pi.prod_id ORDER BY pi.img_id) AS rn
+		            FROM PROD_IMAGE pi
+		            WHERE pi.img_type = 0
+		        ) pi
+		        WHERE pi.rn = 1
+		    ) pi ON pi.prod_id = COALESCE(sps.prod_id, rps.prod_id)
+		WHERE
+		    c.member_id = #{member_id}
+		    AND c.cart_id = #{cart_id}
+		    AND sps.s_stock_id IS NOT NULL
+	</select>
+
+	<!-- 대여 장바구니 담은 개수 -->
+	<select id="countRentCartList" parameterType="string" resultType="int">
+		SELECT count(*)
+		FROM CART c
+		JOIN MEMBER m on(c.member_id = m.member_id)
+		WHERE c.member_id = #{member_id} 
+		AND r_stock_id is NOT NULL
+	</select>
+	<!-- 판매상품 장바구니 담은 개수 -->
+	<select id="countSellCartList" parameterType="string" resultType="int">
+		SELECT count(*)
+		FROM CART c
+		JOIN MEMBER m on(c.member_id = m.member_id)
+		WHERE c.member_id = #{member_id} 
+		AND s_stock_id is NOT NULL
+	</select>
+	<!-- 회원의 장바구니 상품 정보 전체 조회  -->
+	<select id="selectSellCartProdInfo" parameterType="string" resultType="map">
+        SELECT
+		    c.cart_id,
+		    c.member_id,
+		    p.prod_name,
+		    p.prod_price,
+		    p.prod_id,
+		    sps.s_stock_id,
+		    rps.r_stock_id,
+		    o1.opt_name AS opt_name1,
+		    o2.opt_name AS opt_name2,
+		    o3.opt_name AS opt_name3,
+		    o4.opt_name AS opt_name4,
+		    o5.opt_name AS opt_name5,
+		    o1.opt_value AS opt_value1,
+		    o2.opt_value AS opt_value2,
+		    o3.opt_value AS opt_value3,
+		    o4.opt_value AS opt_value4,
+		    o5.opt_value AS opt_value5,
+		    c.cart_amount,
+		    c.product_type,
+		    pi.img_id
+		FROM
+		    CART c
+		LEFT JOIN
+		    SELL_PROD_STOCK sps ON c.s_stock_id = sps.s_stock_id
+		LEFT JOIN
+		    RENT_PROD_STOCK rps ON c.r_stock_id = rps.r_stock_id
+		LEFT JOIN
+		    PROD p ON p.prod_id = COALESCE(sps.prod_id, rps.prod_id)
+		LEFT JOIN
+		    PROD_OPTION o1 ON o1.opt_id = COALESCE(sps.opt_id1, rps.opt_id1)
+		LEFT JOIN
+		    PROD_OPTION o2 ON o2.opt_id = COALESCE(sps.opt_id2, rps.opt_id2)
+		LEFT JOIN
+		    PROD_OPTION o3 ON o3.opt_id = COALESCE(sps.opt_id3, rps.opt_id3)
+		LEFT JOIN
+		    PROD_OPTION o4 ON o4.opt_id = COALESCE(sps.opt_id4, rps.opt_id4)
+		LEFT JOIN
+		    PROD_OPTION o5 ON o5.opt_id = COALESCE(sps.opt_id5, rps.opt_id5)
+		LEFT JOIN
+		    (
+		        SELECT pi.prod_id, pi.img_id
+		        FROM (
+		            SELECT pi.prod_id, pi.img_id,
+		                   ROW_NUMBER() OVER (PARTITION BY pi.prod_id ORDER BY pi.img_id) AS rn
+		            FROM PROD_IMAGE pi
+		            WHERE pi.img_type = 0
+		        ) pi
+		        WHERE pi.rn = 1
+		    ) pi ON pi.prod_id = COALESCE(sps.prod_id, rps.prod_id)
+		WHERE
+		    c.member_id = #{member_id}
+	    AND sps.s_stock_id IS NOT NULL
+	</select>
+	<!-- 회원의 대여 장바구니 상품 정보 전체 조회  -->
+	<select id="selectRentCartProdInfo" parameterType="string" resultType="map">
+		SELECT
+		    c.cart_id,
+		    c.member_id,
+		    p.prod_name,
+		    p.prod_price,
+		    sps.s_stock_id,
+		    rps.r_stock_id,
+		    o1.opt_name AS opt_name1,
+		    o2.opt_name AS opt_name2,
+		    o3.opt_name AS opt_name3,
+		    o4.opt_name AS opt_name4,
+		    o5.opt_name AS opt_name5,
+		    o1.opt_value AS opt_value1,
+		    o2.opt_value AS opt_value2,
+		    o3.opt_value AS opt_value3,
+		    o4.opt_value AS opt_value4,
+		    o5.opt_value AS opt_value5,
+		    c.cart_amount,
+		    c.product_type,
+		    pi.img_id
+		FROM
+		    CART c
+		LEFT JOIN
+		    SELL_PROD_STOCK sps ON c.s_stock_id = sps.s_stock_id
+		LEFT JOIN
+		    RENT_PROD_STOCK rps ON c.r_stock_id = rps.r_stock_id
+		LEFT JOIN
+		    PROD p ON p.prod_id = COALESCE(sps.prod_id, rps.prod_id)
+		LEFT JOIN
+		    PROD_OPTION o1 ON o1.opt_id = COALESCE(sps.opt_id1, rps.opt_id1)
+		LEFT JOIN
+		    PROD_OPTION o2 ON o2.opt_id = COALESCE(sps.opt_id2, rps.opt_id2)
+		LEFT JOIN
+		    PROD_OPTION o3 ON o3.opt_id = COALESCE(sps.opt_id3, rps.opt_id3)
+		LEFT JOIN
+		    PROD_OPTION o4 ON o4.opt_id = COALESCE(sps.opt_id4, rps.opt_id4)
+		LEFT JOIN
+		    PROD_OPTION o5 ON o5.opt_id = COALESCE(sps.opt_id5, rps.opt_id5)
+		LEFT JOIN
+		    (
+		        SELECT pi.prod_id, pi.img_id
+		        FROM (
+		            SELECT pi.prod_id, pi.img_id,
+		                   ROW_NUMBER() OVER (PARTITION BY pi.prod_id ORDER BY pi.img_id) AS rn
+		            FROM PROD_IMAGE pi
+		            WHERE pi.img_type = 0
+		        ) pi
+		        WHERE pi.rn = 1
+		    ) pi ON pi.prod_id = COALESCE(sps.prod_id, rps.prod_id)
+		WHERE
+		    c.member_id = #{member_id}
+		AND rps.r_stock_id IS NOT NULL
+	</select>
+	<!-- CART테이블에 넣을 선택한 옵션 이름으로 상품의 재고ID 찾기(parameterType = 동적VO)  -->
+    <select id="searchStockId" parameterType="com.team4.shoppingmall.cart.CartDynamicVO" 
+    		resultType="string">
+		SELECT seller_prod_stock.s_stock_id 
+		FROM seller_prod_stock
+		WHERE opt_id1||','|| opt_id2||','||opt_id3 ||','||opt_id4||','||opt_id5   
+		LIKE 	 
+		( 
+	  		SELECT 
+	        listAgg(opt_id,',') within group(order by opt_id)
+			FROM PROD_OPTION PO
+			WHERE  PO.PROD_ID = #{prod_id}
+	        and (
+	       <foreach collection="mapData" item="opt_value" index="opt_name" separator="or">
+	       	 (opt_name = #{opt_name} and opt_value=#{opt_value})  
+	       </foreach>
+       		)
+	 	)||'%'
+    </select>
+
+	<select id="selectSellStockByMemberId" parameterType="string"
+		resultType="cartVO">
+		SELECT *
+		FROM CART
+		WHERE member_id = #{member_id} and s_stock_id IS NOT NULL
+	</select>
+	
+	<select id="selectRentStockByMemberId" parameterType="string"
+		resultType="cartVO">
+		SELECT *
+		FROM CART
+		WHERE member_id = #{member_id} and r_stock_id IS NOT NULL
+	</select>
+
+	<select id="selectAllStockByMemberId" parameterType="string"
+		resultType="cartVO">
+		SELECT *
+		FROM CART
+		WHERE "member_id" = #{member_id}
+	</select>
+	
+	<select id="selectByCartId" parameterType="int"
+		resultType="cartVO">
+		SELECT * 
+		FROM CART 
+		WHERE cart_id = #{cart_id}
+	</select>
+
+	<select id="selectAll" resultType="cartVO">
+		SELECT *
+		FROM CART
+	</select>
+
+	<!-- 장바구니(구매상품)에 같은 상품이 존재하는지 조회 -->
+	 <select id="selectCartBySellStock" resultType="cartVO">
+	    select * 
+	    from CART
+	    where member_id = #{member_id}
+	    and s_stock_id = #{s_stock_id}
+	</select>
+	<!-- 장바구니(대여상품)에 같은 상품이 존재하는지 조회 -->
+	 <select id="selectCartByRentStock" resultType="cartVO">
+	    select * 
+	    from CART
+	    where member_id = #{member_id}
+	    and s_stock_id is null and
+        r_stock_id = #{r_stock_id}
+	</select>
+	
+	<!-- 장바구니(구매상품) 생성 : 시퀀스 사용(cart_squence), product_type칼럼 추가  -->
+	<insert id="cartInsert" parameterType="cartVO">
+		INSERT 
+		INTO CART(cart_id, member_id, s_stock_id, r_stock_id, cart_amount, product_type) 
+		VALUES(cart_sequence.nextval, 
+			  #{member_id}, 
+			  #{s_stock_id}, 
+			  null,
+			  #{cart_amount}, 
+			  'sell')
+			  
+	    <selectKey keyProperty="cart_id" resultType="Integer" order="AFTER">
+	        SELECT cart_sequence.CURRVAL FROM DUAL
+	    </selectKey>
+	</insert>
+	<!-- 장바구니(대여상품) 생성, 대여재고id 칼럼 추가 -->
+	<insert id="cartRentProductInsert" parameterType="cartVO">
+		INSERT 
+		INTO CART(cart_id, member_id, s_stock_id, r_stock_id, cart_amount, product_type) 
+		VALUES(
+			  cart_sequence.nextval, 
+			  #{member_id}, 
+			  null,
+			  #{r_stock_id},
+			  #{cart_amount}, 
+			  'rent')
+			  
+	   <selectKey keyProperty="cart_id" resultType="Integer" order="AFTER">
+	        SELECT cart_sequence.CURRVAL FROM DUAL
+	   </selectKey>
+	</insert>
+	
+	<!-- 장바구니(구매상품) 속 중복 상품의 수량 업데이트 -->
+	<update id="updateCartBySellStock" parameterType="cartVO">
+	    update cart
+	    set cart_amount = cart_amount + #{cart_amount} 
+	    where cart_id = #{cart_id} and product_type = 'sell'
+	</update>
+	<!-- 장바구니(대여상품) 속 중복 상품의 수량 업데이트 -->
+	<update id="updateCartByRentStock" parameterType="cartVO">
+	    update cart
+	    set cart_amount = cart_amount + #{cart_amount} 
+	    where cart_id = #{cart_id} and product_type = 'rent'
+	</update>
+	
+	<update id="cartUpdate" parameterType="cartVO">
+		UPDATE CART
+		SET
+		member_id = #{member_id}, 
+		s_stock_id = #{s_stock_id}, 
+		r_stock_id = #{r_stock_id}, 
+		cart_amount = #{cart_amount},
+		product_type = #{product_type}
+		WHERE cart_id = #{cart_id}
+	</update>
+	
+	<delete id="cartDelete" parameterType="int">
+		DELETE
+		FROM CART
+		WHERE cart_id = #{cart_id}
+	</delete>
+	
+</mapper>

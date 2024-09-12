@@ -1,0 +1,13 @@
+eclipse.preferences.version=1
+encoding//src/main/java/com/shinhan/myapp/aop/StopWatchAdvice.java=UTF-8
+encoding//src/main/java/com/shinhan/myapp/controller/EmpController.java=UTF-8
+encoding//src/main/java/com/shinhan/myapp/filter/LoginCheckFilter.java=UTF-8
+encoding//src/main/java/com/shinhan/myapp/util/DBUtil.java=UTF-8
+encoding//src/main/java/org/firstzone/myapp/dept/DeptDAO.java=UTF-8
+encoding//src/main/java/org/firstzone/myapp/dept/DeptDAOMybatis.java=UTF-8
+encoding//src/main/java/org/firstzone/myapp/dept/DeptDTO.java=UTF-8
+encoding//src/main/java/org/firstzone/myapp/dept/DeptService.java=UTF-8
+encoding//src/main/java/org/firstzone/myapp/emp/EmpDAO.java=UTF-8
+encoding//src/main/java/org/firstzone/myapp/emp/EmpDAOMybatis.java=UTF-8
+encoding//src/main/java/org/firstzone/myapp/emp/EmpService.java=UTF-8
+encoding//src/main/webapp/WEB-INF/views/home.jsp=UTF-8

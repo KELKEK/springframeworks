@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+      PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.saren.order_detail">
+
+	<!-- 주문상품 브랜드,이름 -->
+	<select id="getOrderProdBrand" parameterType="int"
+		resultType="map">
+		SELECT DISTINCT M.brand, p.prod_name
+		FROM MEMBER M
+		JOIN PROD
+		P ON M.member_id = P.member_id
+		JOIN SELL_PROD_STOCK S ON P.prod_id =
+		S.prod_id
+		JOIN ORDER_DETAIL O ON S.s_stock_id = O.s_stock_id
+		WHERE
+		O.order_id = #{order_id}
+	</select>
+
+	<select id="selectAll" resultType="order_detailVO">
+		SELECT *
+		FROM ORDER_DETAIL
+	</select>
+
+	<!-- 주문 상세 하나에 대한 데이터 가져오기 -->
+	<select id="selectByOrderDetail_Id" parameterType="int"
+		resultType="order_detailVO">
+		SELECT *
+		FROM ORDER_DETAIL
+		WHERE orderdetail_id =
+		#{orderdetail_id}
+	</select>
+
+	<!-- 주문상세 생성 - 결제대기상태 (주문상태 칼럼 추가) -->
+	<insert id="orderDetailInsert" parameterType="order_detailVO">
+		INSERT
+		INTO
+		ORDER_DETAIL(orderdetail_id, order_product_price, order_num, order_id,
+		s_stock_id, order_state)
+		VALUES(
+		order_detail_sequence.nextval,
+		#{order_product_price},
+		#{order_num},
+		ORDER_PROD_SEQUENCE.currval,
+		#{s_stock_id},
+		'결제대기'
+		)
+	</insert>
+	
+	<!-- 장바구니에 여러 개 들어있을 때 주문상세 생성 - 결제대기상태 (주문상태 칼럼 추가) -->
+	<insert id="orderDetailforCartiInsert" parameterType="order_detailVO">
+		INSERT
+		INTO
+		ORDER_DETAIL(orderdetail_id, order_product_price, order_num, order_id,
+		s_stock_id, order_state)
+		VALUES(
+		#{orderdetail_id},
+		#{order_product_price},
+		#{order_num},
+		#{order_id},
+		#{s_stock_id},
+		'결제대기'
+		)
+	</insert>
+
+	<!-- 주문 ID 단위로 주문 상세 데이터 목록 가져오기 -->
+	<select id="selectByOrder_Id" parameterType="int"
+		resultType="order_detailVO">
+		SELECT *
+		FROM ORDER_DETAIL
+		WHERE order_id=#{order_id}
+	</select>
+
+	<!-- 판매자ID 단위로 주문 상세 데이터 목록 가져오기 -->
+	<select id="selectBySellerID" parameterType="string"
+		resultType="order_detailVO">
+		SELECT od.*
+		FROM ORDER_DETAIL od
+		JOIN SELL_PROD_STOCK sps ON
+		od.s_stock_id = sps.s_stock_id
+		JOIN PROD p ON sps.prod_id = p.prod_id
+		WHERE p.member_id = #{member_id}
+	</select>
+
+	<update id="orderDetailUpdate" parameterType="order_detailVO">
+		UPDATE ORDER_DETAIL
+		SET
+		orderdetail_id = #{orderdetail_id},
+		order_product_price =
+		#{order_product_price},
+		order_num = #{order_num},
+		order_id =
+		#{order_id},
+		s_stock_id = #{s_stock_id},
+		order_state = #{order_state}
+		WHERE orderdetail_id = #{orderdetail_id}
+	</update>
+
+	<update id="orderDetailStatusUpdate"
+		parameterType="order_detailVO">
+		UPDATE ORDER_DETAIL
+		SET order_state = #{order_state}
+		WHERE orderdetail_id = #{orderdetail_id}
+	</update>
+
+	<delete id="orderDetailDelete" parameterType="int">
+		DELETE
+		FROM
+		ORDER_DETAIL
+		WHERE orderdetail_id = #{orderdetail_id}
+	</delete>
+
+	<delete id="orderDetailDelByOrderID" parameterType="int">
+		DELETE
+		FROM
+		ORDER_DETAIL
+		WHERE order_id = #{order_id}
+	</delete>
+
+	<select id="searchCustomerOrderList" parameterType="string"
+		resultType="map">
+		SELECT DISTINCT
+		m.member_id,
+		m.member_pw,
+		m.member_name,
+		m.email,
+		m.phone,
+		m.brand,
+		m.birth_date,
+		m.last_access,
+		m.member_type,
+		m.gender,
+		m.seller_authority,
+		m.create_date,
+		cst.point,
+		cst.member_level,
+		cst.accum_amount,
+		a.addr_num,
+		a.zipcode,
+		a.main_address,
+		a.detail_address,
+		a.is_master_addr,
+		a.sub_address,
+		cp.coupon_id,
+		cp.coupon_name,
+		cp.discount_rate,
+		cp.quantity,
+		o.order_id,
+		o.order_date,
+		o.total_price,
+		p.prod_id,
+		p.prod_name,
+		p.prod_desc,
+		p.prod_price,
+		p.prod_added_date,
+		c.category_id,
+		c.category_name,
+		c.category_depth,
+		c.parent_category_id,
+		sps.*,
+		od.orderdetail_id,
+		od.order_product_price,
+		od.order_num,
+		od.order_state,
+		(od.order_product_price - (od.order_product_price * (cp.discount_rate / 100))) AS
+		discounted_price
+		FROM
+		member m
+		JOIN customer cst ON m.member_id = cst.member_id
+		JOIN order_prod o ON m.member_id = o.member_id
+		JOIN addr_list a ON o.addr_num = a.addr_num
+		JOIN order_detail od ON o.order_id = od.order_id
+		JOIN sell_prod_stock sps ON od.s_stock_id = sps.s_stock_id
+		JOIN prod p ON sps.prod_id = p.prod_id
+		JOIN category c ON p.category_id = c.category_id
+		LEFT JOIN coupon cp ON m.member_id = cp.member_id
+		WHERE
+		m.member_type = 1
+		AND m.member_id = #{member_id}
+		ORDER BY
+		m.member_id, o.order_date
+	</select>
+	
+	<select id = "findMaxOrderDetailID" resultType="int">
+		SELECT MAX(orderdetail_id) AS max_orderdetail_id
+		FROM ORDER_DETAIL
+	</select>
+
+</mapper>

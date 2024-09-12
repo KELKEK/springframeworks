@@ -1,0 +1,12 @@
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:35:39 +0900] "GET /shoppingmall/resources/images/icon_serch.png HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:35:39 +0900] "GET /shoppingmall/resources/js/jquery-3.7.1.min.js HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:35:39 +0900] "GET /shoppingmall/resources/images/logo_main.png HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:35:39 +0900] "GET /shoppingmall/resources/css/header_footer.css HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:35:39 +0900] "GET /shoppingmall/resources/css/style.css HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:35:39 +0900] "GET /shoppingmall/resources/css/mypage.css HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:35:39 +0900] "GET /shoppingmall/resources/images/icon-person2.png HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:35:39 +0900] "GET /shoppingmall/resources/images/icon-logout.png HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:35:39 +0900] "GET /shoppingmall/resources/css/common.css HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:35:39 +0900] "GET /shoppingmall/resources/images/icon-cart.png HTTP/1.1" 304 -
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:36:22 +0900] "POST /shoppingmall/prod/headerctg HTTP/1.1" 500 1556
+0:0:0:0:0:0:0:1 - - [17/Jul/2024:22:36:23 +0900] "GET /shoppingmall/ HTTP/1.1" 500 1556

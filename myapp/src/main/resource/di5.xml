@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.3.xsd">
+	<bean id="c1" class="com.shinhan.myapp.section5.ComputerVO">
+		<!-- 자바의 객체가 스프링의 bean -->
+		<property name="model" value="ABC"></property>
+		<property name="price" value="100"></property>
+		<property name="os" value="window"></property>
+	</bean>
+	<bean id="c2" class="com.shinhan.myapp.section5.ComputerVO">
+		<!-- 자바의 객체가 스프링의 bean -->
+		<property name="model" value="ABC2"></property>
+		<property name="price" value="200"></property>
+		<property name="os" value="Unix"></property>
+	</bean>
+
+
+	<bean id="company" class="com.shinhan.myapp.section5.CompanyVO"
+		p:compName="신한DS" p:address="서울시 중구">
+		<property name="computerList">
+			<list>
+				<ref bean="c1" />
+				<ref bean="c2" />
+			</list>
+		</property>
+	</bean>
+<!-- 	<util:list > -->
+<!-- 		<ref bean="c3" /> -->
+<!-- 		<ref bean="c4" /> -->
+<!-- 	<util:/list> -->
+
+	<bean id="comList" class="java.util.ArrayList">
+
+	</bean>
+</beans>

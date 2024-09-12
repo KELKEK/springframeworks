@@ -1,0 +1,117 @@
+@import url(./common.css);
+
+/* header */
+.header_top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100px;
+}
+
+.leftGnb {
+    display: flex;
+    align-items: center;
+
+}
+
+.rightGnb {
+    padding-top: 40px;
+}
+
+.rightGnb>ul {
+    display: flex;
+    gap: 20px;
+}
+
+.rightGnb>ul>li {
+    position: relative;
+}
+
+.rightGnb>ul>li a {
+    font-size: 12px;
+
+}
+
+.rightGnb>ul>li img {
+    width: 45px;
+    position: absolute;
+    top: -45px;
+    left: -4px;
+    cursor: pointer;
+}
+
+.logo {
+    width: 200px;
+}
+
+.logo>img {
+    width: 100%;
+}
+
+.search_form input {
+    border: none;
+    border-bottom: 1px solid #000;
+    outline: none;
+}
+
+.search_form>label {
+    display: flex;
+}
+
+.search_img {
+    width: 24px;
+}
+
+.header_bottom {
+    display: flex;
+    justify-content: space-between;
+    height: 50px;
+    line-height: 50px;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+}
+
+.menu_wrap {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.menu_wrap li {
+    transition: 0.2s;
+}
+
+.menu_wrap li:hover {
+    border-bottom: 4px solid #513AE4;
+}
+
+.right_menu {
+    display: flex;
+    gap: 30px;
+}
+
+.left_menu {
+    display: flex;
+    gap: 30px;
+}
+
+.dropdown_nav {
+    display: none;
+    /* 서브 메뉴 잠시 숨김 */
+}
+
+.highlight {
+    font-weight: bold;
+    color: var(--accent-color);
+}
+
+
+/* footer */
+footer {
+    background-color: #222;
+
+}
+
+.footLogo img {
+    width: 200px;
+}
